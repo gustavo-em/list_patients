@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
+import React, {memo, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  ListRenderItemInfo,
   Text,
   TouchableOpacity,
   View,
@@ -36,7 +37,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import {getUsers} from './functions';
 
-export const List = () => {
+export const List = memo(() => {
   const {users, setUsers, searching, setSearching} = useUsers();
   const [search, setSearch] = useState<String>('');
   const [userDetails, setUserDetails] = useState<IUsers | null>(null);
@@ -81,7 +82,7 @@ export const List = () => {
     getUsersFromApi(URL_USERS);
   }, []);
 
-  const itemUser = ({item}: IUsers) => {
+  const itemUser = ({item}: ListRenderItemInfo<IUsers>) => {
     return (
       <TouchableOpacity onPress={() => chooseUser(item)}>
         <User user={item}></User>
@@ -90,6 +91,25 @@ export const List = () => {
   };
   return (
     <>
+      <Search
+        value={search}
+        onChangeText={(text: React.SetStateAction<String>) => setSearch(text)}
+        placeholder={'Searching'}
+      />
+      {users && users.length !== 0 && !searching ? (
+        <WrapperList>
+          <FlatList
+            data={users}
+            renderItem={itemUser}
+            keyExtractor={(item, index) => index.toString()}
+          />
+        </WrapperList>
+      ) : (
+        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <ActivityIndicator color={colors.green100} size={100} />
+          <Text>Loading</Text>
+        </View>
+      )}
       {userDetails ? (
         <ContainerModal>
           <Animated.View
@@ -172,25 +192,6 @@ export const List = () => {
           </Animated.View>
         </ContainerModal>
       ) : null}
-      <Search
-        value={search}
-        onChangeText={text => setSearch(text)}
-        placeholder={'Searching'}
-      />
-      {users && users.length !== 0 && !searching ? (
-        <WrapperList>
-          <FlatList
-            data={users}
-            renderItem={itemUser}
-            keyExtractor={user => user.login.uuid}
-          />
-        </WrapperList>
-      ) : (
-        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-          <ActivityIndicator color={colors.green100} size={100} />
-          <Text>Loading</Text>
-        </View>
-      )}
     </>
   );
-};
+});
